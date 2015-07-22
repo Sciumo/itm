@@ -1,0 +1,188 @@
+
+ A manual for
+       QKPFL,  "Quick Profile"
+
+   This is a main program designed to illustrate one way to use the ITM
+in the point-to-point mode.  Written long ago, it was meant to have punched
+cards for input.  That is probably still the best way to imagine the
+process, although we would now suppose the "punched cards" are each
+represented by a single 80-column line in some file.  The program reads
+such lines to define parameters and prints out tables showing estimated
+quantiles of basic transmission loss versus reliability for a set of
+confidence levels.  In addition to the system and environmental parameters,
+the user must specify a terrain profile in the form of a sequence of surface
+elevations taken at equally spaced points along the great circle joining the
+two terminals.  The mode of variability is restricted to the fixed-link
+communications service, but the user may choose the specific quantiles, both
+of reliability and of confidence, for which computations will be made.
+
+  *Input*
+   Input is through a sequence of cards of eight different "types."  Each
+type introduces a particular set of parameters or directs the program to
+perform a particular operation.  The cards may appear in any number and in
+almost any order and as many output pages for as many different systems as
+desired may be produced.  The concept is that the information on any one
+card will change values for the indicated parameters while leaving all other
+values as they were previously defined.  When all desired changes have been
+made, the user request an execution run, whereupon computations are made
+and a page of output produced.  At the very beginning all parameters except
+the terrain profile are assigned default values.  These are therefore the
+values used unless the user explicitly changes them.  Furthermore, most
+of the parameters must, by their nature, have strictly positive values; if
+they are given zero or negative values on the input cards, the program will
+simply ignore those values and therefore retain those previously given.  In
+particular, since Fortran interprets a blank field as a zero value, such a
+blank field may be used to indicate that the corresponding parameter is not
+to be changed.
+   The cards are read in 10-column fields, the first of which is a sequence
+of digits and the remaining seven floating point numbers read with an F10.0
+format.  Column 1 is always an "execute" indicator: if it is any non-zero
+digit, then as soon as the card is processed, the program makes its compu-
+tations using parameter values as are then defined.  The digit in column 2
+indicates the card type and defines how the remaining digits in the first
+ten columns and how the floating point numbers in the remaining fields are
+to be interpreted.  In outline, the eight types can be described as follows:
+
+               Col
+               12        11, ...
+               -------------------------------------------------------
+Stop           X0            (or a blank card)
+Title          X1            (with a 60-column title on the next card)
+Profile        X2        d, xi, zsc
+     (followed by a set of "profile cards".  These have 5-column
+      fields in the format
+               ENN  p0,  p1, ...)
+Reliability    X3        qR1, qR2, ...
+Confidence     X4        qC1, qC2, ...
+Parameters     X7PC      fMHz, hg1, hg2, N0, Ns, eps, sig
+Execute        X8
+Reset          X9
+
+   In this table we have begun the representation of a card with the execute
+digit X in column 1 and the card type digit in column 2.  Following this
+there may be single upper case letters indicating particular parameters with
+single digit values and then there comes a sequence of variables.  These
+latter are to be replaced by floating point values in successive 10-column
+fields beginning at column 11.  The card types and definitions of the
+variables are described in detail below.
+
+  *Card Type 0: Stop.  When this card is read the program has finished the
+job run.  If the execute digit is set, a page of output is produced first.
+This card, which can be entirely blank, should be the last card of the input
+file.  On many computers, however, it is unnecessary.  This is true if, upon
+reading an end-of-file, the computer either leaves the input variables
+unchanged or zeroes them out.
+
+  *Card Type 1: Title.  If desired, the user may supply a short title which
+will appear at the top of thge output pages.  This title will consist of the
+first 60 columns on the card that immediately follow a card of type 1.  The
+default title reads "Link predictions from the Longley-Rice model, version
+1.2.2."
+
+  *Card Type 2: Profile.  This card heads a subset of cards defining the
+terrain profile.  The profile is given as a sequence of elevations
+p0, p1, ..., pnp, taken at equal intervals xi from the point under the
+first terminal to that under the second.  The total distance d between the
+two terminals is then the product of np and xi.  On the header card one
+must specify one or both of d and xi measured in kilometers.  The program
+itself will count the number of profile intervals to arrive at the value
+of np.  If both xi and d are given, the d takes precedence, but if it is
+not at least approximately equal to np times xi, the program sets an error
+flag and will not allow analysis of this profile.  The elevations them-
+selves may be in any desired units if the scale factor zsc defines that
+unit in meters.  (Since maps normally provide elevation contours in feet,
+the foot will usually be the most convenient unit.  In that case, one should
+set zsc equal to 0.3048.)  If zsc is not positive, or if the field is left
+blank, the program assumes that the elevations are in meters and that zsc
+equals 1.
+   The digit T is a profile title indicator.  If it is not zero or blank,
+then the card immediately following the header card contains a character
+string describing the path.  The first 60 columns will be used as a subtitle
+on each page of output.
+   Following the header card or the profile title card, if present, there 
+should be a set of elevation cards.  There may be any number of them, but
+they must be in the proper order.  Each elevation card is separated into 
+5-column fields the first of which is a sequence of digits and the remaining
+fifteen floating point numbers read with an F5.0 format.  Column 1 is the
+"exit" digit E.  If it is any non-zero digit, then as soon as the card is
+processed the program stops reading elevation cards and either goes into the
+computation phase (if the execute digit on the header card was non-zero) or
+returns to reading further input cards.  The digits NN in columns 2 and 3
+form a right justified one or two digit field count having values between
+1 and 15.  The program will read the first NN fields on the card, attach the
+values to the end of the terrain profile, and proceed to the next card.  If
+NN is zero, the program will assume the elevation cards have terminated and
+so go on to the next step.  Thus, inserting a blank card following the set
+of elevation cards is an alternative way of ending that set.  (Note,
+however, that if one uses both an exit digit on the last card and a blank
+card following, then the blank card is not part of the profile set but is a
+stop card which will halt the job run itself.)
+   There are no default values for any of the variables involved.  Thus,
+each time a profile set is provided, all values involved must be redefined.
+
+  *Card Type 3: Reliability.  This card defines a sequence of reliability
+values which will be used as the independent variable for which quantiles
+of basic transmission loss will be computed.  Since we are speaking here
+of a fixed-link communications service, reliability refers to the time
+availability of hourly medians.  There may be from one to seven of these
+values, all measured as percentages.  Each of the listed values will be
+used in the order given to head a row in the output table.  Each use of
+the card redefines the entire list of reliability values.  If none are
+specified, the program defaults to a single value equal to 50 percent.
+The original default condition uses three levels equal to 50, 90, and
+10 percent, in that order.
+
+  *Card Type 4: Confidence.  This card defines a sequence of confidence
+levels which will be used as the second independent variable (the first
+being reliability) for which quantiles of basic transmission loss will be
+computed.  There may be from one to seven of these levels, all measured as
+percentages.  Each of the listed levels will be used in the order given to
+head a column in the output table.  Each use of the card redefines the
+entire list of confidence levels.  If none are specified, the program
+defaults to a single value equal to 50 percent.  The original default
+condition uses three levels equal to 50, 90, and 10 percent, in that order.
+
+  *Card Type 7: Parameters.  This card is used to specify the system para-
+meters and parameters relating to the atmosphere and the ground.  The digit
+P defines the polarization: 0 for horizontal and 1 for vertical polariza-
+tion.  Since it can have the value 0, it must always be explicitly defined.
+The digit C defines the radio climate according to the coded values:
+             C = 1, equatorial
+                 2, continental subtropical
+                 3, maritime subtropical
+                 4, desert
+                 5, continental temperate
+                 6, maritime temperate, overland
+                 7, maritime temperate, oversea
+If the digit is 0 or blank it is ignored, and the climate code used will be
+the one previously defined.  The frequency fMHz is measured in megahertz
+and is the value of the carrier frequency.  The heights hg1, hg2, measured
+in meters, are the heights above ground of the antennas at the two corre-
+sponding terminals.  If there is a question, it is the so-called center of
+radiation of the antenna that should be used.  The parameter N0, measured in
+N-units, is the surface refractivity of the atmosphere as reduced to sea
+level.  The actual surface refractivity Ns will be computed from both N0 and
+the average elevation as determined from the terrain profile.  If one wants
+to introduce directly the value of Ns, this can be done in the next field.
+If both fields have positive values, the value of N0 takes precedence.  The
+dielectric constant eps of the ground and the conductivity sig measured in
+siemens per meter are in the last two fields.  These are treated as a pair;
+if the value of eps is positive, then the value of sig must also be sup-
+plied; if the value of eps is not positive, both fields will be ignored.
+The default values: vertical polarization (P=1), a continental temperate
+climate (C=5), a frequency of 100 MHz, antenna heights of 3 m at both ter-
+minals, N0=310 N-units, and an average ground with eps=15, sig=0.005 S/m.
+
+  *Card Type 8: Execute.  When this card is read, the program immediately
+makes its computations using the data that have been previously defined.
+This is an alternative to setting the execute digit on the preceeding card.
+
+  *Card Type 9: Reset.  When this card is read, the program will reset all
+parameters to their default values and clear the terrain profile.  Any
+following input cards may proceed on the assumption that they are effect-
+ively the first cards in the job run.
+
+  *Further Remarks*
+   While the program was originally written in Fortran 66 and still retains
+much of its older appearance, it now has some features of Fortran 77.  In
+particular the "titles" mentioned above are now stored as character strings.

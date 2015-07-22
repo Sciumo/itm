@@ -1,0 +1,94 @@
+
+ A manual for
+       UAREA,  "User's Area model"
+
+   This is a main program designed to illustrate one way to use the ITM
+in the area prediction mode.  The program is interactive; it asks for input
+in a series of "virtual cards" and then writes the output to a user-named
+file.
+
+  *Input*
+   Input is designed to appear like a sequence of prepunched cards which
+the user is to correct.  Fields are always 10 columns wide and entries are
+either single characters or real numbers.  In operation, there first appears
+a line or two defining the card, then a header providing mnemonics for the
+successive fields, and then the card itself with vertical lines separating
+the fields and the current values "punched" in.  Finally the program stops
+and awaits input with the cursor on the next line.  If all current values
+are satisfactory, one can simply strike the "enter" key.  If some are to be
+"corrected," one should space over to the proper field and type the correct
+value.  Note that one is simply responding to a Fortran input command.  To
+move the cursor one can use either the space bar or the backspace key.  The
+cursor movement keys will not work.
+   The four cards of this program are described below.
+
+  *Card 1: System parameters.  These consist of H1, H2, antenna heights of
+the two terminals, measured in meters; F the radio frequency in MHz; Pol,
+the polarization, either horizontal or vertical; and the siting criteria
+for the two terminals.  Horizontal polarization may be indicated by either
+of the characters 'H' or '0', while vertical polarization is indicated by
+either 'V' or '1'.  A siting criterion is one of Random ('R' or '0'),
+Careful ('C' or '1'), or Very Careful ('V' or '2').
+
+  *Card 2: Environmental parameters.  These are DH, the terrain irreg-
+ularity parameter "delta h", in meters; Ns, the surface refractivity, in
+N-units (parts per million); Clim, the radio climate; eps, the dielectric
+constant of the ground; and sgm, the conductivity of the ground, measured
+in S/m.  The climate is indicated by a single character and may be
+Continental Temperate ('C'), Maritime Temperate OverLand ('M'), or Maritime
+Temperate OverSea ('S').  It can also be indicated by the "climate code,"
+which is a single digit 1,...,7 corresponding to:
+          Clim = 1, equatorial
+                 2, continental subtropical
+                 3, maritime subtropical
+                 4, desert
+                 5, continental temperate
+                 6, maritime temperate, overland
+                 7, maritime temperate, oversea
+
+  *Card 3: Statistical parameters.  These are Var, the mode of variability;
+QT, the required percentage of time; QL, the required percentage of
+locations; and the QC1, QC2, QC3, QC4, as many as four confidence levels,
+given as percentages.  The mode of variability is indicated by a character,
+and may be Single Message ('S' or '0'), Accidental ('A' or '1'), Mobile ('M'
+or '2'), or Broadcast ('B' or '3').  Depending upon this mode, the variables
+QT and QL may or may not be appropriate.  If not, they are simply ignored.
+The output is a table of quantiles whose rows represent a sequence of
+distances, and whose columns represent the different confidence levels.  The
+number of columns is therefore determined by the number of confidence levels
+and this is determined by the list of QC's.  The first blank field (or 0 or
+negative value) marks an end to this list.
+
+  *Card 4: Tabulation parameters.  These provide the distances that will be
+used as the first independent variable, thus defining the rows of the output
+table.  There may be as many as 5 such parameters, d0, d1, ds1, d2, ds2,
+all measured in kilometers.  These define the output through one of three
+intended formats: (i) d0 alone with the remaining variables omitted--
+only the single distance d0; (ii) d0, d1, ds1 alone--distances from d0 to
+d1 in steps of ds1; and (iii) all five variables--after stepping through
+to d1 as above, distances continue on to d2 in steps of ds2.  If some of
+the variables such as the step sizes are undefined, the program uses its
+own algorithms to define them.  For example, if d0 is not positive it is
+replaced by ds1.
+
+  *Further Input*
+   Following the four "cards" are three questions which should be answered
+on the same line and concluded with the 'enter' key.  The questions:
+      >needs editing(N)?  To make emendments to the input data, one answers
+          'Yes' ('Y') and the program presents the four input cards again.
+      >A title?  If a top-line title is desired it should be entered here.
+          Up to 69 characters may be introduced.
+      >and the output file: ITM.DAT?  Here one may name the file (with its
+          path) to which the output will be written.  If a proposed file
+          already exists, the user will be asked whether the older file
+          should be overwritten.  On the other hand, if a second run is
+          made without exiting the program, and if then the file name is
+          unchanged, the second table will be merely appended to the first.
+   The program then does the required calculations, writes the output to
+the named output file, and then asks the one last question:
+      >exit (N)?  If the response is not 'Yes' ('Y') the program returns
+          to its beginning and expects to continue with another run.
+   Incidentally, there is another way to make a fairly graceful exit.  If
+the first field of a "card" is numeric, and if it is filled with an
+illegal value (e.g., any letter) then the program will offer a chance to
+exit.

@@ -1,0 +1,5 @@
+@rem Here is one, rather cumbersome, way to use the QKPFL program
+@rem * It requires the DOS operating system and a mathematics coprocessor
+@rem * Answers will be found in the file QKPFL.ANS
+@rem * ...and may be compared with those in QKPFL.ANX.
+QKPFL <QKPFL.DAT >QKPFL.ANS
