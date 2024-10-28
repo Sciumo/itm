@@ -75,6 +75,9 @@ DerivedData
 ###########
 docs/html
 
+### build ###
+bin/
+
 ###########
 ## VS Code
 ###########

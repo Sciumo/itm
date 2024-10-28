@@ -24,7 +24,7 @@ set(MATLAB_WRAPPER_DIR "${PROJECT_SOURCE_DIR}/wrap/matlab")
 set(PYTHON_WRAPPER_DIR "${PROJECT_SOURCE_DIR}/wrap/python")
 
 # Define options. Defaults to: compile 64-bit library, build docs, run tests
-option(BUILD_DOCS "Generate documentation with Doxygen" ON)
+option(BUILD_DOCS "Generate documentation with Doxygen" OFF)
 option(DOCS_ONLY "Skip all steps except generating documentation" OFF)
 option(RUN_TESTS "Run C++ unit tests with Google Test + CTest" ON)
 option(COPY_TO_WRAPPERS "Copy compiled library into wrapper submodules" ON)

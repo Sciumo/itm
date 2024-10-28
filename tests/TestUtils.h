@@ -20,8 +20,14 @@ using std::sqrt;
 
 #define ABSTOL__DB 0.1;
 
+#ifdef _WIN32
+#define STDCALL __stdcall
+#else
+#define STDCALL
+#endif
+
 // Typedefs for loading functions from prior-version DLL
-typedef int(__stdcall *itm_p2p_tls_func)(
+typedef int(STDCALL *itm_p2p_tls_func)(
     double h_tx__meter,
     double h_rx__meter,
     double pfl[],

@@ -45,7 +45,7 @@ std::vector<std::vector<double>> readProfiles(const std::string &filename) {
 
     while (std::getline(file, line)) {
         // Skip blank lines
-        if (line.empty() || std::all_of(line.begin(), line.end(), isspace)) {
+        if (line.empty() || std::all_of(line.begin(), line.end(), static_cast<int(*)(int)>(std::isspace))) {
             continue;
         }
 

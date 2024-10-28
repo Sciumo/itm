@@ -6,7 +6,12 @@
 // ITM available as "itm.dll" in {REPO_ROOT}/tests/data/
 // Currently this is only supported on Windows.
 
-#include <windows.h>  // For FreeLibrary, LoadLibrary, GetProcAddress
+#ifdef _WIN32
+    #include <windows.h>  // For FreeLibrary, LoadLibrary, GetProcAddress
+#else
+    #include <dlfcn.h>    // For dlopen, dlsym, dlclose
+    #include <stdexcept>
+#endif
 
 // TODO : Add area mode tests
 
@@ -22,22 +27,55 @@ protected:
         EXPECT_NE(parameters.size(), 0);
         EXPECT_NE(profiles.size(), 0);
 
-        // Load ITM DLL
+
+        // Load ITM Shared Library    
         std::string dataDir = getDataDirectory();
-        hLib = LoadLibrary((dataDir + "itm.dll").c_str());
-        ASSERT_NE(hLib, nullptr) << "Failed to load DLL";
-        ITM_PREV_P2P_TLS = reinterpret_cast<itm_p2p_tls_func>(
-            GetProcAddress(hLib, "ITM_P2P_TLS")
-        );
-        ASSERT_NE(ITM_PREV_P2P_TLS, nullptr)
-            << "Failed to get P2P Mode function address";
+        #ifdef _WIN32
+            const std::string libName = "itm.dll";
+            hLib = LoadLibrary((dataDir + libName).c_str());
+            ASSERT_NE(hLib, nullptr) << "Failed to load DLL";
+            
+            ITM_PREV_P2P_TLS = reinterpret_cast<itm_p2p_tls_func>(
+                GetProcAddress(hLib, "ITM_P2P_TLS")
+            );
+            ASSERT_NE(ITM_PREV_P2P_TLS, nullptr)
+                << "Failed to get P2P Mode function address";
+        #else
+            const std::string libName = "libitm.so";
+            libHandle = dlopen((dataDir + libName).c_str(), RTLD_LAZY);
+            
+            if (!libHandle) {
+                FAIL() << "Failed to load shared library: " << dlerror();
+            }
+            
+            // Clear any existing error
+            dlerror();
+            
+            void* symbolAddr = dlsym(libHandle, "ITM_P2P_TLS");
+            const char* dlsym_error = dlerror();
+            
+            if (dlsym_error) {
+                dlclose(libHandle);
+                FAIL() << "Failed to get P2P Mode function address: " << dlsym_error;
+            }
+            
+            ITM_PREV_P2P_TLS = reinterpret_cast<itm_p2p_tls_func>(symbolAddr);
+            ASSERT_NE(ITM_PREV_P2P_TLS, nullptr) 
+                << "Failed to get P2P Mode function address";
+        #endif            
     }
 
     void TearDown() override {
-        // Unload the DLL
-        if (hLib) {
-            FreeLibrary(hLib);
-        }
+        // Unload the Shared Library
+        #ifdef _WIN32
+            if (hLib) {
+                FreeLibrary(hLib);
+            }
+        #else
+            if (libHandle) {
+                dlclose(libHandle);
+            }
+        #endif
     }
 
     // Vectors to hold test data
@@ -59,8 +97,12 @@ protected:
     long warnings = 0;
     int rtn;
 
-    // DLL Loading
-    HMODULE hLib;
+    // Shared Library Loading
+    #ifdef _WIN32
+        HMODULE hLib = nullptr;
+    #else
+        void* libHandle = nullptr;
+    #endif    
     itm_p2p_tls_func ITM_PREV_P2P_TLS;
 };
 
