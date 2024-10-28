@@ -34,7 +34,7 @@ option(BUILD_32BIT "Build project for x86/32-bit instead of x64/64-bit" OFF)
 ## SETUP
 ###########################################
 # GoogleTest v1.12.1 requires at least C++11
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ##########################################

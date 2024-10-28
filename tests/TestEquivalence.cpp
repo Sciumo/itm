@@ -11,6 +11,8 @@
 #else
     #include <dlfcn.h>    // For dlopen, dlsym, dlclose
     #include <stdexcept>
+    #include <filesystem>
+    namespace fs = std::filesystem;
 #endif
 
 // TODO : Add area mode tests
@@ -41,8 +43,15 @@ protected:
             ASSERT_NE(ITM_PREV_P2P_TLS, nullptr)
                 << "Failed to get P2P Mode function address";
         #else
-            const std::string libName = "libitm.so";
-            libHandle = dlopen((dataDir + libName).c_str(), RTLD_LAZY);
+            fs::path basePath = fs::path(dataDir);
+            fs::path relPath = "../../bin";
+            fs::path libDir = fs::canonical(basePath / relPath);        
+            fs::path libPath = libDir / "libITM.so";
+            if (!fs::exists(libPath)) {
+                FAIL() << "Library doest not exists. " << libPath.c_str();
+            }
+
+            libHandle = dlopen(libPath.c_str(), RTLD_LAZY);
             
             if (!libHandle) {
                 FAIL() << "Failed to load shared library: " << dlerror();
